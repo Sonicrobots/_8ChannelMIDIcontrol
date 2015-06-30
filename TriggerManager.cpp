@@ -18,12 +18,13 @@
 
 
 
-void TriggerManager::init(uint8_t numberChannels, uint8_t* preDelay, uint8_t* holdTime) {
-  shiftRegFast::setup();
+void TriggerManager::init(PinSettings* pins, uint8_t* preDelay, uint8_t* holdTime) {
 
-  for (uint8_t index=0; index<min(numberChannels,number595*8); index++) {
+  // save arguments
+  for (uint8_t index=0; index<numbChannels; index++) {
     setPreDelay(index,preDelay[index]);
     setHoldTime(index,holdTime[index]);
+    this->pins[index] = pins[index];
   }
 
   setAllOff();
@@ -34,6 +35,13 @@ void TriggerManager::init(uint8_t numberChannels, uint8_t* preDelay, uint8_t* ho
   TIMSK0 = (1<<OCIE0A);
   OCR0A  = F_CPU/1024/interruptFreq;
 
+  // set pins in output mode
+  for (uint8_t index=0; index<numbChannels; index++) {
+	  *(this->pins[index].DDR_REG) |= 1<<(this->pins[index].PinIndex);
+	  *(this->pins[index].PORT_REG) &= ~(1<<(this->pins[index].PinIndex));
+	  states[index] = false;
+  }
+
   #ifdef DEBUG_IR
   bit_dir_outp(DEBUGPIN);
   bit_set(DEBUGPIN);
@@ -43,24 +51,28 @@ void TriggerManager::init(uint8_t numberChannels, uint8_t* preDelay, uint8_t* ho
 void TriggerManager::setPreDelay(uint8_t channel, uint8_t time) {
 
 	// do nothing if channel number is out of bounds
-	if (channel >= number595*8) return;
+	if (channel >= numbChannels) return;
 
 	preDelays[channel] = min(254,time);
 }
 void TriggerManager::setHoldTime(uint8_t channel, uint8_t time) {
 
 	// do nothing if channel number is out of bounds
-	if (channel >= number595*8) return;
+	if (channel >= numbChannels) return;
 
 	holdTimes[channel] = min(254,time);
 }
 
-void TriggerManager::update() {
-  for (uint8_t index=0; index<number595; index++) {
-    shiftRegFast::write_8bit(states[index]);
+/*void TriggerManager::update() {
+  for (uint8_t index=0; index<numbChannels; index++) {
+    if (states[index]) {
+    	*(pins[index].PORT_REG) |= 1<<(pins[index].PinIndex);
+    } else {
+    	*(pins[index].PORT_REG) &= ~(1<<(pins[index].PinIndex));
+    }
   }
-  shiftRegFast::enableOutput();
-}
+
+}*/
 
 void TriggerManager::setOn(uint8_t channel) {
 
@@ -69,7 +81,7 @@ void TriggerManager::setOn(uint8_t channel) {
   #endif
 
   // do nothing if channel number is out of bounds
-  if (channel >= number595*8) return;
+  if (channel >= numbChannels) return;
 
   // do nothing if channel is active
   if (toggleTimes[channel] != 255) return;
@@ -82,12 +94,13 @@ void TriggerManager::setOn(uint8_t channel) {
 }
 
 bool TriggerManager::isChannelOn(uint8_t channel) {
-  return states[channel/8] & (1<<(channel%8));
+  //return *(pins[channel].PORT_REG) & 1<<(pins[channel].PinIndex);
+  return states[channel];
 }
 
 
 void TriggerManager::checkForToggle() {
-  for (uint8_t index=0; index<number595*8; index++) {
+  for (uint8_t index=0; index<numbChannels; index++) {
 
     if (toggleTimes[index] != 255){
       toggleTimes[index]--;
@@ -102,7 +115,7 @@ void TriggerManager::checkForToggle() {
   // check for necessity doesn't make sense because
   // we need to set interrupt time for maximum
   // execution time of this function anyways
-  update();
+  //update();
 }
 
 void TriggerManager::toggleChannel(uint8_t channel) {
@@ -110,19 +123,19 @@ void TriggerManager::toggleChannel(uint8_t channel) {
   // if this was just the pre-delay, we need to load next trigger for switch off
   if (!isChannelOn(channel)) toggleTimes[channel] = holdTimes[channel];
 
-  // invert state
-  states[channel/8] = states[channel/8] ^ (1<<(channel%8));
+  // invert state and flip pin
+  *(pins[channel].PIN_REG) |= 1<<(pins[channel].PinIndex);
+  states[channel] = !states[channel];
+
 
 }
 
 void TriggerManager::setAllOff() {
-  for (uint8_t index=0; index<number595; index++) {
-    states[index] = 0;
+  for (uint8_t index=0; index<numbChannels; index++) {
+    *(pins[index].PORT_REG) &= ~(1<<(pins[index].PinIndex));
+
   }
 
-  for (uint8_t index=0; index<number595*3; index++) {
-    toggleTimes[index] = 0;
-  }
 }
 
 TriggerManager triggers;
