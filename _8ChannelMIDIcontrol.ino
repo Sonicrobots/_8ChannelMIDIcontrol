@@ -44,7 +44,7 @@ const uint8_t testLED = 13;
 const uint8_t channels = 8;
  //              Trigger Pin   0,  1,  2,  3,  4,  5,  6,  7
 uint8_t preDelays[channels] = {0,  1,  1,  1,  0,  0,  0,  0  };
-uint8_t holdTimes[channels] = {2,  3,  4, 90, 90, 90, 90, 90  };
+uint8_t holdTimes[channels] = {90,  90,  90, 90, 90, 90, 90, 90  };
 uint8_t  midiNote[channels] = {1,  2,  3,  4,  5,  6,  7,  8, };
 
 
@@ -55,25 +55,24 @@ PinSettings pins[channels] = {
 		{2,&DDRB,&PORTB,&PINB},
 		{3,&DDRB,&PORTB,&PINB},
 		{4,&DDRB,&PORTB,&PINB},
-		{1,&DDRC,&PORTC,&PINC},
+		{0,&DDRC,&PORTC,&PINC},
 		{5,&DDRD,&PORTD,&PIND},
 		{6,&DDRD,&PORTD,&PIND}
 };
 
-
 //#define DEBUG
 
 
-// Readout the coded switch on PIN 2,4,5,7 on Startup. To set the MIDI Channel (1-16)
+// Readout the coded switch on PIN 2,3,4,7 on Startup. To set the MIDI Channel (1-16)
 uint8_t readMidiChannel()
 {
 	// set pins as inputs
-	pinMode(2, INPUT_PULLUP);pinMode(7, INPUT_PULLUP);pinMode(4, INPUT_PULLUP);pinMode(5, INPUT_PULLUP); // the pins for the coded channel switch with build in PULLUP resistors
+	pinMode(2, INPUT_PULLUP);pinMode(7, INPUT_PULLUP);pinMode(4, INPUT_PULLUP);pinMode(3, INPUT_PULLUP); // the pins for the coded channel switch with build in PULLUP resistors
 
 	uint8_t i=0;
-	bitWrite(i, 0, !digitalRead(2));
-	bitWrite(i, 1, !digitalRead(5));
-	bitWrite(i, 2, !digitalRead(7));
+	bitWrite(i, 0, !digitalRead(3));
+	bitWrite(i, 1, !digitalRead(7));
+	bitWrite(i, 2, !digitalRead(2));
 	bitWrite(i, 3, !digitalRead(4));
 
 	return i+1; //+1 .. nullausgleich
@@ -142,11 +141,8 @@ void loop() {
 	#endif
 
 
-
-
-
-	// set the hold time for all channels
-	uint8_t holdTime = analogRead(4);
+      // set the hold time for all channels
+       uint8_t holdTime = analogRead(4);
 
 	static uint8_t oldHoldTime;
 	if (holdTime != oldHoldTime) {
