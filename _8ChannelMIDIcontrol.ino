@@ -61,7 +61,7 @@ PinSettings pins[channels] = {
 };
 
 
-//define DEBUG
+//#define DEBUG
 
 
 // Readout the coded switch on PIN 2,4,5,7 on Startup. To set the MIDI Channel (1-16)

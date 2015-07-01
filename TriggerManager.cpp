@@ -29,18 +29,18 @@ void TriggerManager::init(PinSettings* pins, uint8_t* preDelay, uint8_t* holdTim
 
   setAllOff();
 
+  // set pins in output mode
+  for (uint8_t index=0; index<numbChannels; index++) {
+	  *(this->pins[index].PORT_REG) &= ~(1<<(this->pins[index].PinIndex));
+	  *(this->pins[index].DDR_REG) |= 1<<(this->pins[index].PinIndex);
+	  states[index] = false;
+  }
+
   //setup timer
   TCCR0A = (1<<WGM01);
   TCCR0B = (1<<CS02) | (1<<CS00);
-  TIMSK0 = (1<<OCIE0A);
   OCR0A  = F_CPU/1024/interruptFreq;
-
-  // set pins in output mode
-  for (uint8_t index=0; index<numbChannels; index++) {
-	  *(this->pins[index].DDR_REG) |= 1<<(this->pins[index].PinIndex);
-	  *(this->pins[index].PORT_REG) &= ~(1<<(this->pins[index].PinIndex));
-	  states[index] = false;
-  }
+  TIMSK0 = (1<<OCIE0A);
 
   #ifdef DEBUG_IR
   bit_dir_outp(DEBUGPIN);
@@ -63,17 +63,6 @@ void TriggerManager::setHoldTime(uint8_t channel, uint8_t time) {
 	holdTimes[channel] = min(254,time);
 }
 
-/*void TriggerManager::update() {
-  for (uint8_t index=0; index<numbChannels; index++) {
-    if (states[index]) {
-    	*(pins[index].PORT_REG) |= 1<<(pins[index].PinIndex);
-    } else {
-    	*(pins[index].PORT_REG) &= ~(1<<(pins[index].PinIndex));
-    }
-  }
-
-}*/
-
 void TriggerManager::setOn(uint8_t channel) {
 
   #ifdef DEBUG_PRINT
@@ -94,7 +83,6 @@ void TriggerManager::setOn(uint8_t channel) {
 }
 
 bool TriggerManager::isChannelOn(uint8_t channel) {
-  //return *(pins[channel].PORT_REG) & 1<<(pins[channel].PinIndex);
   return states[channel];
 }
 
@@ -111,11 +99,6 @@ void TriggerManager::checkForToggle() {
 
   }
 
-  // always update
-  // check for necessity doesn't make sense because
-  // we need to set interrupt time for maximum
-  // execution time of this function anyways
-  //update();
 }
 
 void TriggerManager::toggleChannel(uint8_t channel) {
@@ -124,7 +107,7 @@ void TriggerManager::toggleChannel(uint8_t channel) {
   if (!isChannelOn(channel)) toggleTimes[channel] = holdTimes[channel];
 
   // invert state and flip pin
-  *(pins[channel].PIN_REG) |= 1<<(pins[channel].PinIndex);
+  *(pins[channel].PIN_REG) = 1<<(pins[channel].PinIndex);
   states[channel] = !states[channel];
 
 
@@ -133,6 +116,8 @@ void TriggerManager::toggleChannel(uint8_t channel) {
 void TriggerManager::setAllOff() {
   for (uint8_t index=0; index<numbChannels; index++) {
     *(pins[index].PORT_REG) &= ~(1<<(pins[index].PinIndex));
+    toggleTimes[index] = 255;
+    states[index] = 0;
 
   }
 
