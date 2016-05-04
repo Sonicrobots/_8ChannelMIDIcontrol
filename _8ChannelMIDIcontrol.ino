@@ -36,6 +36,8 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #include "TriggerManager.h"
 extern TriggerManager triggers;
 
+static uint8_t holdTime;
+
 
 #define testLED B,5
 
@@ -45,7 +47,6 @@ extern TriggerManager triggers;
 const uint8_t channels = 8;
  //              Trigger Pin    0,  1,  2,  3,  4,  5,  6,  7
 uint8_t preDelays[channels] = { 0,  1,  1,  1,  0,  0,  0,  0  };
-uint8_t holdTimes[channels] = {90, 90, 90, 90, 90, 90, 90, 90  };
 uint8_t  midiNote[channels] = { 1,  2,  3,  4,  5,  6,  7,  8, };
 
 
@@ -92,6 +93,10 @@ void HandleNoteOn(byte channel, byte note, byte velocity) {
 			#ifdef DEBUG
 			Serial.print("= Channel #"); Serial.println(index);
 			#endif
+
+			uint8_t thisHoldTime = ((uint16_t)holdTime*velocity)/128;
+
+			triggers.setHoldTime(index,thisHoldTime);
 			triggers.setOn(index);
 
 			return; // no need to search further
@@ -127,6 +132,7 @@ void setup() {
 	Serial.println("Hello");
 	#endif
 	
+	uint8_t holdTimes[channels] = {90, 90, 90, 90, 90, 90, 90, 90  };
 	triggers.init(&pins[0],&preDelays[0],&holdTimes[0]);
 
 }
@@ -149,25 +155,10 @@ void loop() {
 
 
 	// set the hold time for all channels
-	static uint8_t holdTime;
 	if (fastAnalogRead::isConversionFinished()) {
 		holdTime = fastAnalogRead::getConversionResult();
 		fastAnalogRead::startConversion();
 	}
-
-	static uint8_t oldHoldTime;
-	if (holdTime != oldHoldTime) {
-		oldHoldTime = holdTime;
-
-		#ifdef DEBUG
-		Serial.print("Hold time changed: "); Serial.println(holdTime);
-		#endif
-
-		for (uint8_t index=0; index<channels; index++) {
-			triggers.setHoldTime(index,holdTime);
-		}
-	}
-
 
     
 }
