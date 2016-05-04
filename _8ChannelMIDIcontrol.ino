@@ -36,16 +36,16 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 extern TriggerManager triggers;
 
 
-const uint8_t testLED = 13;
+#define testLED B,5
 
 //
 // Set up dynamic behavior for different 595 pins that are controlled by a TriggerManager
 //
 const uint8_t channels = 8;
- //              Trigger Pin   0,  1,  2,  3,  4,  5,  6,  7
-uint8_t preDelays[channels] = {0,  1,  1,  1,  0,  0,  0,  0  };
-uint8_t holdTimes[channels] = {90,  90,  90, 90, 90, 90, 90, 90  };
-uint8_t  midiNote[channels] = {1,  2,  3,  4,  5,  6,  7,  8, };
+ //              Trigger Pin    0,  1,  2,  3,  4,  5,  6,  7
+uint8_t preDelays[channels] = { 0,  1,  1,  1,  0,  0,  0,  0  };
+uint8_t holdTimes[channels] = {90, 90, 90, 90, 90, 90, 90, 90  };
+uint8_t  midiNote[channels] = { 1,  2,  3,  4,  5,  6,  7,  8, };
 
 
 // Which channel corresponds to which pin on atmega
@@ -80,7 +80,9 @@ uint8_t readMidiChannel()
 
 
 void HandleNoteOn(byte channel, byte note, byte velocity) {
-			digitalWrite(testLED,HIGH);
+	
+	bit_set(testLED);
+
 	// searching for the channel that fits the received note
     for (uint8_t index=0; index< channels; index++) {
 
@@ -99,7 +101,7 @@ void HandleNoteOn(byte channel, byte note, byte velocity) {
 void HandleNoteOff(byte channel, byte note, byte velocity) {
 
 	// just for indication if midi works
-	digitalWrite(testLED,LOW);
+	bit_clear(testLED);
 
 }
 
@@ -107,21 +109,21 @@ void HandleNoteOff(byte channel, byte note, byte velocity) {
 
 
 void setup() {
-      pinMode(testLED, OUTPUT);
+      
+	bit_dir_outp(testLED);
 
-      #ifndef DEBUG
-      MIDI.setHandleNoteOn(HandleNoteOn);
-      MIDI.setHandleNoteOff(HandleNoteOff);
-      MIDI.begin(readMidiChannel());  // listens on only channel which is set up with the coded switch
-	  #endif
-
-	  #ifdef DEBUG
-      Serial.begin(115200);
-      Serial.println("Hello");
-	  #endif
-
-      triggers.init(&pins[0],&preDelays[0],&holdTimes[0]);
-
+	#ifndef DEBUG
+	MIDI.setHandleNoteOn(HandleNoteOn);
+	MIDI.setHandleNoteOff(HandleNoteOff);
+	MIDI.begin(readMidiChannel());  // listens on only channel which is set up with the coded switch
+	#endif
+	
+	#ifdef DEBUG
+	Serial.begin(115200);
+	Serial.println("Hello");
+	#endif
+	
+	triggers.init(&pins[0],&preDelays[0],&holdTimes[0]);
 
 }
 
