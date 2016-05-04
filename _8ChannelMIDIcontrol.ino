@@ -14,6 +14,7 @@
 #ifdef EXTERNAL_IDE
 #include <Arduino.h>
 #include <shiftRegisterFast.h>
+#include "fastAnalogRead.h"
 int main(void) {
   init();
   setup();
@@ -111,6 +112,9 @@ void HandleNoteOff(byte channel, byte note, byte velocity) {
 void setup() {
       
 	bit_dir_outp(testLED);
+	fastAnalogRead::init();
+	fastAnalogRead::connectChannel(4);
+	fastAnalogRead::startConversion();
 
 	#ifndef DEBUG
 	MIDI.setHandleNoteOn(HandleNoteOn);
@@ -129,6 +133,7 @@ void setup() {
 
 
 void loop() {
+
 	#ifndef DEBUG
 	MIDI.read();
 	#endif
@@ -143,8 +148,12 @@ void loop() {
 	#endif
 
 
-      // set the hold time for all channels
-       uint8_t holdTime = analogRead(4);
+	// set the hold time for all channels
+	static uint8_t holdTime;
+	if (fastAnalogRead::isConversionFinished()) {
+		holdTime = fastAnalogRead::getConversionResult();
+		fastAnalogRead::startConversion();
+	}
 
 	static uint8_t oldHoldTime;
 	if (holdTime != oldHoldTime) {
