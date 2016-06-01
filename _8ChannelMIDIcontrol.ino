@@ -13,8 +13,7 @@
 // does not get parsed when using Arduino IDE
 #ifdef EXTERNAL_IDE
 #include <Arduino.h>
-#include <shiftRegisterFast.h>
-#include "fastAnalogRead.h"
+
 int main(void) {
   init();
   setup();
@@ -23,6 +22,9 @@ int main(void) {
   }
 }
 #endif
+
+
+#include "fastAnalogRead.h"
 
 
 #include <MIDI.h>
