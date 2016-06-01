@@ -2,7 +2,7 @@
 #define FASTANALOGREAD_H_
 
 #include <avr/io.h>
-#include <portManipulations.h>
+#include "portManipulations.h"
 
 namespace fastAnalogRead {
 
