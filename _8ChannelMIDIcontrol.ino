@@ -7,7 +7,8 @@
 // === Recources: ===
 // MIDI Library https://github.com/FortySevenEffects/arduino_midi_library (used: c4.2.)
 // 
-
+// TOC One Mosfet 
+// V.03 
 
 
 // does not get parsed when using Arduino IDE
@@ -49,8 +50,9 @@ static uint8_t holdTime;
 const uint8_t channels = 8;
  //              Trigger Pin    0,  1,  2,  3,  4,  5,  6,  7
 uint8_t preDelays[channels] = { 0,  1,  1,  1,  0,  0,  0,  0  };
-uint8_t  midiNote[channels] = { 1,  2,  3,  4,  5,  6,  7,  8, };
-
+// uint8_t  midiNote[channels] = { 88, 89, 90, 91, 92, 93, 94, 95};
+uint8_t  midiNote[channels] = {36, 37,  38,  39,  40,  41,  42,  43};
+// --> Neu für Andi C2 ... G2
 
 // Which channel corresponds to which pin on atmega
 PinSettings pins[channels] = {
@@ -141,8 +143,7 @@ void setup() {
 
 
 void loop() {
-
-	#ifndef DEBUG
+  #ifndef DEBUG
 	MIDI.read();
 	#endif
 
@@ -161,7 +162,7 @@ void loop() {
 		holdTime = fastAnalogRead::getConversionResult();
 		fastAnalogRead::startConversion();
 	}
-
+  MIDI.setInputChannel(readMidiChannel());
     
 }
 
